@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <!--  Meta  -->
+  <meta charset="UTF-8" />
+  <title>星云心愿</title>
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/iview/2.14.0/styles/iview.css">
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.13/vue.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/iview/2.14.0/iview.min.js"></script>
+  <link rel="stylesheet" href="styles/index.processed.css">
+</head>
+
+<body>
+  <div id="app">
+    <i-header>
+        <i-menu mode="horizontal" theme="dark" active-name="0" @on-select="selectMenu">  
+
+     <div class="layout-logo"></div>
+        <div class="layout-nav">
+          <menu-item name="0">
+            <Icon type="ios-navigate"></Icon>
+            许愿
+          </menu-item>
+          <menu-item name="1" on-select="selectMenu">
+            <Icon type="ios-keypad"></Icon>
+            我的心愿
+          </menu-item>
+        </div>
+      </i-menu>
+    </i-header>
+    <i-content>
+      <div v-show="showTab==1">
+        <div>
+          <h3>*当存款存到目标值时会自动返还到用户账号</h3>
+          <h3>*点击取消会回退之前存储的NAS</h3>
+        </div>
+        <i-table :columns="columns1" :data="mineData"></i-table>
+      </div>
+      <div v-show="showTab==0">
+
+        <div id="splash">
+            <div class="quote"><Icon type="quote" id="leftQuote"></Icon>梦想一旦被付诸行动,</div>
+              <div class="quote">就会变得神圣<Icon type="quote" id="rightQuote"></Icon></div>
+              <div class="author">--阿安·普罗克特</div>
+        </div>
+        <Row>
+          <i-col span="24" offset="10">
+            <i-button id="showModalBtn" type="primary" @click="modal1=true" size="large">许下心愿</i-button>
+          </i-col>
+        </Row>
+        <div class="wishContainer">
+        <p class="right">
+           去澳大利亚看考拉<span class="font-style1">说走就走的旅行<span> <em>去西班牙看国家德比</em>
+          </p>
+        <p class="right">
+             <em>送TA礼物</em>去伦敦喂鸽子<span class="font-style1">送自己一份奢侈的礼物<span>
+          </p>
+         </div>
+        <Modal v-model="modal1" title="心愿储蓄" @on-ok="pay">
+          <p>心愿</p>
+          <i-input v-model="snackName" size="large" placeholder="心愿"></i-input>
+          <p>目标金额</p>
+          <i-input v-model="snackDesc" size="large" placeholder="目标金额"></i-input>
+        </Modal>
+      </div>
+      <Modal
+      v-model="webExtensionWalletShow"
+      title="您的浏览器不支持星云dapp!"
+      :mask-closable="false"
+      :closable="false">
+      <p v-if="!isMobile">请先安装<a target="_blank" href="https://github.com/ChengOrangeJu/WebExtensionWallet">WebExtensionWallet</a></p>
+      <p v-else>请先安装<a target="_blank" href="https://nano.nebulas.io/index_en.html">Nas Nano</a></p>
+
+      <p slot="footer"><a @click="reload">刷新</a></p>
+  </Modal>
+    </i-content>
+    <i-footer>
+      <i-row>
+        <span>
+        <Avatar src="https://avatars0.githubusercontent.com/u/10058453" shape="square" size="large" />
+      </span>
+        <span>Author: kagawa</span>
+      </i-row>
+    </i-footer>
+  </div>
+  <script src="scripts/index.js"></script>
+  <script src="lib/nebPay.min.js"></script>
+</body>
+<script>
+  var NebPay = require("nebpay");
+  var nebPay = new NebPay();
+  let vm = new Vue({
+    el: '#app',
+    data: function(){
+      return {
+      dappAddress: "n1jKE88PfvrUJjaXxfGo8K8ydVbk9M2Lxdu",
+      showTab: 0,
+      modal1: false,
+      snackName:'',
+      snackDesc:'',
+      columns1: [{
+          title: '名称',
+          key: 'name'
+        },
+        {
+          title: '目标(NAS)',
+          key: 'target'
+        },
+        {
+          title: '储蓄(NAS)',
+          key: 'deposite',
+        },
+        {
+          title: '状态',
+          key: 'tag',
+          align: 'center',
+          render:(h,params) =>{
+            let state = ""
+            switch(params.row.tag){
+              case 0:state="进行中";break;
+              case 1:state="完成";break;
+              case -1:state="取消";break;
+              default: state="";break;
+            }
+            return h('div',state)
+          }
+        },
+        {
+          title: '操作',
+          key: 'action',
+          width: 200,
+          align: 'center',
+          render: (h, params) => {
+            return h('div', [
+              h('Button', {
+                props: {
+                  type: 'primary',
+                  size: 'small',
+                  icon: "thumbsup"
+                },
+                style: {
+                  marginRight: '5px'
+                },
+                on: {
+                  click: () => {
+                    this.clickHandler(params.row.idx,'save');
+                  }
+                }
+              }, '存钱'),
+              h('Button', {
+                props: {
+                  type: 'error',
+                  size: 'small',
+                  icon: "android-cancel"
+                },
+                style: {
+                  // marginLeft: '5px'
+                },
+                on: {
+                  click: () => {
+                    // this.show(params.index)
+                   // alert(JSON.stringify(params.row));
+                   this.clickHandler(params.row.idx,'cancelAWish');
+                  }
+                }
+              }, '取消')
+            ]);
+          }
+        }, 
+      ],
+      webExtensionWalletShow:false,
+      mineData:[],
+      }
+    },
+    mounted:function(){
+        if(this.walletCheck()){
+            this.initialize();
+        }
+    },
+    methods: {
+      selectMenu(name) {
+        this.showTab = name;
+      },
+      clickHandler:function(idx, callFunction){
+        var to = this.dappAddress;
+        var value = "0";
+
+        var callArgs = JSON.stringify([idx])
+        var _this = this;
+        nebPay.call(to, value, callFunction, callArgs, {    //使用nebpay的call接口去调用合约,
+                listener: this.submitCb
+        });
+      },
+      reload:this.initialize,
+      initialize: function () {
+            var to = this.dappAddress;
+            var value = "0";
+
+            var callArgs = JSON.stringify([""])
+            var _this = this;
+
+            callFunction = "getMine";
+            nebPay.simulateCall(to, value, callFunction, callArgs, {    //查找我的数据
+                listener: function(resp){
+                    var result = resp.result;
+                    var resultObj = JSON.parse(result);
+                    _this.mineData = resultObj;
+                }
+            });
+          },
+          isMobile:function() {
+            var filter = 'win16|win32|win64|mac|macintel';
+            if (navigator.platform) return filter.indexOf(navigator.platform.toLowerCase()) < 0 ? true : false;
+        },
+
+        isInstalledWallet:function() {
+            if (!this.isMobile()) return window.webExtensionWallet !== undefined;
+            else return true;
+        },
+      walletCheck:function(){
+            if (!this.isInstalledWallet()) {
+                this.webExtensionWalletShow = true
+                return false;
+            }
+            return true;
+        },
+      selectMenu(name) {
+        this.showTab = name;
+      },
+      pay:function(){
+            let snackName = this.snackName.trim(),snackDesc = this.snackDesc.trim();
+            if(snackName.length == 0 && snackDesc.length == 0){
+              alert("不能都为空");
+              return;
+            }
+            var to = this.dappAddress;
+            var value = "0";
+            var callFunction = "makeAWish";
+            var callArgs = [snackName,snackDesc];
+            nebPay.call(to, value, callFunction, JSON.stringify(callArgs), {    //使用nebpay的call接口去调用合约,
+                listener: this.submitCb
+            });
+      },
+      submitCb:function(resp){
+            let _this = this;
+            this.$Modal.success({
+            title: '提交成功',
+            content: '需要进行区块确认，这可能会花费几十秒钟的时间。</br>你可以在<a href="https://wallet.nasscan.io/check.html" target="_blank">https://wallet.nasscan.io/check.html</a>中</br>使用<code>'+resp.txhash+'</code>查询进度！',
+            width: 600,
+            onOk:_this.initialize,
+            })
+            this.snackDesc ="";
+            this.snackName = "";
+        },
+      }
+  });
+</script>
+
+</html>

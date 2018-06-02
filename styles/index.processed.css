@@ -1,0 +1,62 @@
+/**
+ * index.scss
+ * - Add any styles you want here!
+ */
+
+body {
+  background: #f5f5f5;
+}
+
+body div#app {
+  width: 80%;
+  margin: 0 auto;
+}
+
+body div#splash {
+  width: 100%;
+  background-image: url(http://pic108.nipic.com/file/20160906/11345688_133936365423_2.jpg);
+  height: 450px;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+#rightQuote {
+  transform: rotateY(180deg);
+}
+.quote {
+  height: 100px;
+    line-height: 100px;
+    font-size: 30px;
+    text-align: center;
+}
+.author {
+  height: 100px;
+  line-height: 100px;
+  font-size: 20px;
+  font-weight: 200;
+  text-align: center;
+  margin-left: 500px;
+}
+body #showModalBtn {
+  margin: 20px 0px;
+}
+
+body div.wishContainer {
+  text-align: center;
+}
+
+body div.wishContainer .right {
+  height: 100px;
+  font-size: 24px;
+  line-height: 100px;
+}
+
+body div.wishContainer .right em {
+  margin-right: 20px;
+  font-size: 50px;
+  vertical-align: middle;
+}
+
+body div.wishContainer .font-style1 {
+  margin: 10px;
+  color: rgba(0, 0, 0, 0.3);
+}
